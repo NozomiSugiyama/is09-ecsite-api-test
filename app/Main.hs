@@ -9,8 +9,8 @@ import qualified Data.ByteString.Char8
 import qualified Data.Yaml
 import qualified Network.HTTP.Simple    as HttpSimple
 
-get :: String -> IO (HttpSimple.Response Aeson.Value)
-get = HttpSimple.httpJSON . HttpSimple.parseRequest_
+get :: String -> IO (HttpSimple.Response (Either HttpSimple.JSONException Aeson.Value))
+get = HttpSimple.httpJSONEither . HttpSimple.parseRequest_
 
 responseStatusCode = HttpSimple.getResponseStatusCode
 
@@ -37,6 +37,6 @@ testUrls = [
 
 main :: IO ()
 main = do
-     results <- mapM get testUrls
+     results <- mapM (\x -> (isSuccess . responseStatusCode) <$> get x) testUrls
 
-     print $ (isSuccess . responseStatusCode) <$> results
+     print results
