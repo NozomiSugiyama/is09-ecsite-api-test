@@ -1,14 +1,18 @@
 #!/usr/bin/env stack
 -- stack script --resolver lts-8.22
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE AllowAmbiguousTypes #-}
 
 import           Control.Monad
 import           Control.Monad.IO.Class
-import           Data.Aeson            (Value)
-import qualified Data.ByteString.Char8 as S8
-import  Data.Yaml             as Yaml
-import           Network.HTTP.Simple
+import qualified Data.Aeson             as Aeson
+import qualified Data.ByteString.Char8
+import qualified Data.Yaml
+import qualified Network.HTTP.Simple    as HttpSimple
+
+get :: String -> IO (HttpSimple.Response Aeson.Value)
+get = HttpSimple.httpJSON . HttpSimple.parseRequest_
+
+responseStatusCode = HttpSimple.getResponseStatusCode
 
 isSuccess :: Integral a => a -> Bool
 isSuccess x
@@ -17,11 +21,8 @@ isSuccess x
     where
         code = fromIntegral x
 
-getResponseStatusCodeFromURL :: String -> IO Int
-getResponseStatusCodeFromURL x = getResponseStatusCode <$> ((httpJSON . parseRequest_) x :: IO (Response Value))
-
-testURLList :: [[Char]]
-testURLList = [
+testUrls :: [String]
+testUrls = [
         "https://is09api.acqq.xyz/api/products",
         "https://is09api.acqq.xyz/api/products/1",
         "https://is09api.acqq.xyz/api/products/2",
@@ -30,11 +31,12 @@ testURLList = [
         "https://is09api.acqq.xyz/api/products/5",
         "https://is09api.acqq.xyz/api/products/6",
         "https://is09api.acqq.xyz/api/products/7",
-        "https://is09api.acqq.xyz/api/products/8"
+        "https://is09api.acqq.xyz/api/products/8",
+        "https://api.ipify.org/?format=json"
     ]
 
 main :: IO ()
 main = do
-    x <- isSuccess <$> getResponseStatusCodeFromURL "https://api.ipify.org/?format=json"
+     results <- mapM get testUrls
 
-    print x
+     print $ (isSuccess . responseStatusCode) <$> results
