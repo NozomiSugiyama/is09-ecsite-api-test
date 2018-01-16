@@ -1,10 +1,13 @@
 #!/usr/bin/env stack
 -- stack script --resolver lts-8.22
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
+
+import           Control.Monad
 import           Control.Monad.IO.Class
 import           Data.Aeson            (Value)
 import qualified Data.ByteString.Char8 as S8
-import qualified Data.Yaml             as Yaml
+import  Data.Yaml             as Yaml
 import           Network.HTTP.Simple
 
 isSuccess :: Integral a => a -> Bool
@@ -14,8 +17,8 @@ isSuccess x
     where
         code = fromIntegral x
 
-getResponseStatusCodeFromURL :: MonadIO m => [Char] -> m Bool
-getResponseStatusCodeFromURL = (pure $ isSuccess . getResponseStatusCode) >> (httpJSON . parseRequest_)
+getResponseStatusCodeFromURL :: String -> IO Int
+getResponseStatusCodeFromURL x = getResponseStatusCode <$> ((httpJSON . parseRequest_) x :: IO (Response Value))
 
 testURLList :: [[Char]]
 testURLList = [
@@ -30,16 +33,8 @@ testURLList = [
         "https://is09api.acqq.xyz/api/products/8"
     ]
 
-aa x = "a"
-
 main :: IO ()
 main = do
-    print $ fmap (aa) testURLList
+    x <- isSuccess <$> getResponseStatusCodeFromURL "https://api.ipify.org/?format=json"
 
-    -- response <- httpJSON "https://is09api.acqq.xyz/api/products"
-
-    -- putStrLn $ "The status code was: " ++
-    --            show (fromIntegral (getResponseStatusCode response) / 200)
-    -- print $ getResponseHeader "Content-Type" response
-    -- S8.putStrLn $ Yaml.encode (getResponseBody response :: Value)
-
+    print x
