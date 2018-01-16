@@ -15,7 +15,7 @@ isSuccess x
         code = fromIntegral x
 
 getResponseStatusCodeFromURL :: MonadIO m => [Char] -> m Bool
-getResponseStatusCodeFromURL = (isSuccess . getResponseStatusCode) <$> (httpJSON . parseRequest_)
+getResponseStatusCodeFromURL = (pure $ isSuccess . getResponseStatusCode) >> (httpJSON . parseRequest_)
 
 testURLList :: [[Char]]
 testURLList = [
